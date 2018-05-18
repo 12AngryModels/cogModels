@@ -1,0 +1,34 @@
+---
+name:  sdt
+title: Signal Detection Theory
+menuGroup: resWagner
+version: '1.0.0'
+jas: '1.1'
+
+options:
+    - name: data
+      type: Data
+
+    - name: trial
+      title: Trial
+      type: Variable
+      
+    - name: sig
+      title: Signal
+      type: Level
+      variable: (trial)
+
+    - name: res
+      title: Response
+      type: Variable
+
+    - name: sub
+      title: Subject (optional)
+      type: Variable
+      default:
+
+    - name: group
+      title: Group (optional)
+      type: Variable
+      default:
+...

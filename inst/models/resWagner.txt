@@ -1,0 +1,17 @@
+model {
+    a ~ dunif(0,1)
+    Va0 ~ dunif(0,1)
+    Vb0 ~ dunif(0,1)
+
+    Va[1] <- Va0
+    Vb[1] <- Vb0
+    theta[1] <- exp(Va[1]) / (exp(Va[1]) + exp(Vb[1]))
+    choice[1] ~ dbern(theta[1])
+
+    for (i in 2:N) {
+        Va[i] <- ifelse(choice[i-1] == 0,  Va[i-1] + a*(reward[i-1] - Va[i-1]), Va[i-1])
+        Vb[i] <- ifelse(choice[i-1] == 1,  Vb[i-1] + a*(reward[i-1] - Vb[i-1]), Vb[i-1])
+        theta[i] <- exp(Va[i]) / (exp(Va[i]) + exp(Vb[i]))
+        choice[i] ~ dbern(theta[i])
+    }
+}

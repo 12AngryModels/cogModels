@@ -1,0 +1,11 @@
+---
+name:  sdt
+title: Signal Detection Theory
+jrs:   '1.1'
+
+items:
+    - name:  text
+      title: Signal Detection Theory
+      type:  Preformatted
+
+...

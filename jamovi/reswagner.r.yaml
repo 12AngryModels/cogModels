@@ -1,0 +1,16 @@
+---
+name:  resWagner
+title: Rescorla-Wagner Model
+jrs:   '1.1'
+
+items:
+    - name: plot
+      title: ''
+      type: Image
+      description: a density plot
+      renderFun: .plot
+      clearWith:
+        - choice
+        - key
+
+...

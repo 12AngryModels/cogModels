@@ -1,0 +1,24 @@
+title: Rescorla-Wagner Model
+name: resWagner
+jus: '2.0'
+stage: 0
+compilerMode: aggressive
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Choice
+        children:
+          - type: VariablesListBox
+            name: choice
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Answer key
+        children:
+          - type: VariablesListBox
+            name: key
+            maxItemCount: 1
+            isTarget: true

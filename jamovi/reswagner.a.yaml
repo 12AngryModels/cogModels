@@ -1,0 +1,19 @@
+---
+name:  resWagner
+title: Rescorla-Wagner Model
+menuGroup: resWagner
+version: '1.0.0'
+jas: '1.1'
+
+options:
+    - name: data
+      type: Data
+
+    - name: choice
+      title: Choice
+      type: Variable
+
+    - name: key
+      title: Answer key
+      type: Variable
+...

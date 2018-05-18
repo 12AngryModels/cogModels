@@ -1,0 +1,40 @@
+title: Signal Detection Theory
+name: sdt
+jus: '2.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Trial
+        children:
+          - type: VariablesListBox
+            name: trial
+            maxItemCount: 1
+            isTarget: true
+          - type: LevelSelector
+            name: sig
+      - type: TargetLayoutBox
+        label: Response
+        children:
+          - type: VariablesListBox
+            name: res
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Subject (optional)
+        children:
+          - type: VariablesListBox
+            name: sub
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Group (optional)
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true

@@ -1,0 +1,21 @@
+# Signal Detection Theory
+model{
+    for (i in 1:nSubjs) {
+        # Observed counts
+        HR[i] ~ dbin(thetaHR[i], nSignal)
+        FAR[i] ~ dbin(thetaFAR[i], nNoise)
+            
+        # Reparameterization Using Equal-Variance Gaussian SDT
+        thetaHR[i] <- phi(d[i]/2-c[i])
+        thetaFAR[i] <- phi(-d[i]/2-c[i])
+            
+        # These Priors over Discriminability and Bias Correspond 
+        # to Uniform Priors over the Hit and False Alarm Rates
+        d[i] ~ dnorm(dMu, 0.5)
+        c[i] ~ dnorm(cMu, 2)
+    }
+        
+    # Group priors
+    dMu ~ dnorm(0,0.5)
+    cMu ~ dnorm(0,1)
+}
