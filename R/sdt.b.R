@@ -101,8 +101,14 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
 
             nSignal <- nNoise <- hits <- falseAlarms <- matrix(0, max(nSubjs), nGroups)
 
-            dfs <- split(df, f = list(df[[subjects]], df[[groups]]))
-            print(dfs)
+            dfs <- df
+            if ( ! is.null(subjects)) {
+                if ( ! is.null(groups)) {
+                    dfs <- split(df, f = list(df[[subjects]], df[[groups]]))
+                } else {
+                    dfs <- split(df, f = list(df[[subjects]]))
+                }
+            }
 
             for (g in 1:nGroups) {
                 for (i in 1:nSubjs[g]) {
