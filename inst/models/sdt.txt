@@ -5,17 +5,17 @@ model{
             # Observed counts
             HR[i,g] ~ dbin(thetaHR[i,g], nSignal[i,g])
             FAR[i,g] ~ dbin(thetaFAR[i,g], nNoise[i,g])
-            
+
             # Reparameterization Using Equal-Variance Gaussian SDT
             thetaHR[i,g] <- phi(d[i,g]/2-c[i,g])
             thetaFAR[i,g] <- phi(-d[i,g]/2-c[i,g])
-            
-            # These Priors over Discriminability and Bias Correspond 
+
+            # These Priors over Discriminability and Bias Correspond
             # to Uniform Priors over the Hit and False Alarm Rates
-            d[i,i] ~ dnorm(dMu[g], dSigma[g])
-            c[i,i] ~ dnorm(cMu[g], cSigma[g])
+            d[i,g] ~ dnorm(dMu[g], dSigma[g])
+            c[i,g] ~ dnorm(cMu[g], cSigma[g])
         }
-        
+
         # Group priors
         dMu[g] ~ dnorm(0, 0.5)
         dSigma[g] ~ dgamma(2, 2)
