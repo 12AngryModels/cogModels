@@ -3,37 +3,54 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
     "sdtClass",
     inherit = sdtBase,
     private = list(
+        #### Init + run functions ----
         .run = function() {
+            
+            if (is.null(self$options$res) || is.null(self$options$stim))
+                return()
+            
+            data <- private$.cleanData()
+            results <- private$.compute(data)
+            
+            private$.preparePlot(results)
+        },
+        
+        #### Compute results ----
+        .compute = function(data) {
             
             path <- system.file("models/sdt.txt", package = "resWagner")
             
-            res <- self$options$res
-            trial <- self$options$trial
+            # Sampling Parameters
+            nChains = self$options$nChains
+            nBurnin = self$options$nBurnin
+            nSamples = self$options$nSamples
+            nThin = self$options$nThin
             
-            if (is.null(res) || is.null(trial))
-                return()
+            # Parameters to be monitored
+            parameters <- c('dMu', 'cMu')
             
-            private$.cleanData()
+            # Draw posterior samples
+            model <- rjags::jags.model(file=path, data=data, n.chains=nChains)
             
-            # choiceData <- as.numeric(self$data[[choice]])
-            # keyData <- as.numeric(self$data[[key]])
-            # rewardData <- as.numeric(choiceData == keyData)
-            # 
-            # nTrials <- length(choiceData)
-            # 
-            # data <- list('choice'=choiceData, 'reward'=rewardData, 'N'=nTrials)
-            # 
-            # model <- rjags::jags.model(file = path,
-            #                            data = data,
-            #                            n.chains = 4,
-            #                            n.adapt = 100)
-            # 
-            # update(model, 1000)
-            # 
-            # samples <- rjags::jags.samples(model, c('a'), 1000)
-            # 
-            # image <- self$results$plot
-            # image$setState(samples[['a']])
+            if (nBurnin > 0)
+                update(model, nBurnin)
+            
+            samples <- rjags::jags.samples(model, parameters, thin=nThin, n.iter=nSamples)
+            
+            r <- list(dMu=samples$dMu[,,], cMu=samples$cMu[,,])
+            
+            return(r)
+        },
+        
+        #### Plot functions ----
+        .preparePlot = function(results) {
+            
+            image <- self$results$plot
+            
+            density <- density(results$dMu)
+            df <- data.frame(x = density$x, y = density$y)
+            
+            image$setState(df)
             
         },
         .plot = function(image, ggtheme, theme, ...) {
@@ -41,29 +58,62 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             if (is.null(image$state))
                 return(FALSE)
             
-            plot(density(image$state))
+            p <- ggplot2::ggplot(image$state, ggplot2::aes(x=x, y=y)) +
+                ggplot2::geom_ribbon(ggplot2::aes(ymax=y), ymin=0, fill=theme$fill[2]) + 
+                ggplot2::geom_line(color=theme$color[1]) + ggplot2::xlab('dPrime') + ggplot2::ylab('Density') + 
+                ggtheme
             
+            print(p)
+
             TRUE
             
         },
+        
+        #### Helper functions ----
         .cleanData = function() {
             
-            dataset <- self$data
+            df <- self$data
             
-            res <- self$options$res
-            trial <- self$options$trial
+            response <- self$options$res
+            stimulus <- self$options$stim
             signal <- self$options$sig
             
-            resData <- dataset[[res]]
-            trialData <- dataset[[trial]]
+            subjects <- self$options$subj
+            groups <- self$options$group
             
-            sigTrials <- which(trialData == signal)
-            noiseTrials <- which(trialData != signal)
+            nGroups <- 1
+            if ( ! is.null(groups))
+                nGroups <- length(unique(df[[groups]]))
             
-            HR <- sum(resData[sigTrials] == trialData[sigTrials])
-            FAR <- sum(resData[noiseTrials] != trialData[noiseTrials])
+            nSubjs <- 1
+            if ( ! is.null(subjects))
+                nSubjs <- as.numeric(tapply(df[[subjects]], 
+                                            df[[groups]], 
+                                            function(x) return(length(unique(x)))))
             
-            print(HR)
+            respData <- df[[response]]
+            stimData <- df[[stimulus]]
             
+            nSignal <- nNoise <- hits <- falseAlarms <- matrix(0, max(nSubjs), nGroups)
+            
+            for (g in 1:nGroups) {
+                for (i in 1:nSubjs[g]) {
+                    
+                    sigTrials <- which(stimData == signal)
+                    noiseTrials <- which(stimData != signal)
+                    
+                    nSignal[i,g] <- length(sigTrials)
+                    nNoise[i,g] <- length(noiseTrials)
+                    
+                    hits[i,g] <- sum(respData[sigTrials] == stimData[sigTrials])
+                    falseAlarms[i,g] <- sum(respData[noiseTrials] != stimData[noiseTrials])
+                    
+                }
+            }
+            
+            data <- list(nGroups = nGroups, nSubjs = nSubjs, nSignal = nSignal, nNoise = nNoise,
+                         HR = hits, FAR = falseAlarms)
+            
+            return(data)
         })
 )

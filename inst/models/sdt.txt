@@ -1,21 +1,25 @@
 # Signal Detection Theory
 model{
-    for (i in 1:nSubjs) {
-        # Observed counts
-        HR[i] ~ dbin(thetaHR[i], nSignal)
-        FAR[i] ~ dbin(thetaFAR[i], nNoise)
+    for (g in 1:nGroups) {
+        for (i in 1:nSubjs[g]) {
+            # Observed counts
+            HR[i,g] ~ dbin(thetaHR[i,g], nSignal[i,g])
+            FAR[i,g] ~ dbin(thetaFAR[i,g], nNoise[i,g])
             
-        # Reparameterization Using Equal-Variance Gaussian SDT
-        thetaHR[i] <- phi(d[i]/2-c[i])
-        thetaFAR[i] <- phi(-d[i]/2-c[i])
+            # Reparameterization Using Equal-Variance Gaussian SDT
+            thetaHR[i,g] <- phi(d[i,g]/2-c[i,g])
+            thetaFAR[i,g] <- phi(-d[i,g]/2-c[i,g])
             
-        # These Priors over Discriminability and Bias Correspond 
-        # to Uniform Priors over the Hit and False Alarm Rates
-        d[i] ~ dnorm(dMu, 0.5)
-        c[i] ~ dnorm(cMu, 2)
-    }
+            # These Priors over Discriminability and Bias Correspond 
+            # to Uniform Priors over the Hit and False Alarm Rates
+            d[i,i] ~ dnorm(dMu[g], dSigma[g])
+            c[i,i] ~ dnorm(cMu[g], cSigma[g])
+        }
         
-    # Group priors
-    dMu ~ dnorm(0,0.5)
-    cMu ~ dnorm(0,1)
+        # Group priors
+        dMu[g] ~ dnorm(0, 0.5)
+        dSigma[g] ~ dgamma(2, 2)
+        cMu[g] ~ dnorm(0, 1)
+        cSigma[g] ~ dgamma(2, 2)
+    }
 }

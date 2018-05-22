@@ -9,10 +9,10 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Trial
+        label: Stimulus
         children:
           - type: VariablesListBox
-            name: trial
+            name: stim
             maxItemCount: 1
             isTarget: true
           - type: LevelSelector
@@ -28,7 +28,7 @@ children:
         label: Subject (optional)
         children:
           - type: VariablesListBox
-            name: sub
+            name: subj
             maxItemCount: 1
             isTarget: true
       - type: TargetLayoutBox
@@ -38,3 +38,27 @@ children:
             name: group
             maxItemCount: 1
             isTarget: true
+  - type: CollapseBox
+    label: MCMC Options
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: TextBox
+            name: nSamples
+            format: number
+            inputPattern: '[0-9]+'
+          - type: TextBox
+            name: nChains
+            format: number
+            inputPattern: '[0-9]+'
+          - type: TextBox
+            name: nBurnin
+            format: number
+            inputPattern: '[0-9]+'
+          - type: TextBox
+            name: nThin
+            format: number
+            inputPattern: '[0-9]+'

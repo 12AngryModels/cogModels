@@ -6,11 +6,15 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
-            trial = NULL,
+            stim = NULL,
             sig = NULL,
             res = NULL,
-            sub = NULL,
-            group = NULL, ...) {
+            subj = NULL,
+            group = NULL,
+            nSamples = 1000,
+            nChains = 3,
+            nBurnin = 0,
+            nThin = 1, ...) {
 
             super$initialize(
                 package='resWagner',
@@ -18,49 +22,85 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 requiresData=TRUE,
                 ...)
 
-            private$..trial <- jmvcore::OptionVariable$new(
-                "trial",
-                trial)
+            private$..stim <- jmvcore::OptionVariable$new(
+                "stim",
+                stim)
             private$..sig <- jmvcore::OptionLevel$new(
                 "sig",
                 sig,
-                variable="(trial)")
+                variable="(stim)")
             private$..res <- jmvcore::OptionVariable$new(
                 "res",
                 res)
-            private$..sub <- jmvcore::OptionVariable$new(
-                "sub",
-                sub,
+            private$..subj <- jmvcore::OptionVariable$new(
+                "subj",
+                subj,
                 default=NULL)
             private$..group <- jmvcore::OptionVariable$new(
                 "group",
                 group,
                 default=NULL)
+            private$..nSamples <- jmvcore::OptionNumber$new(
+                "nSamples",
+                nSamples,
+                min=1,
+                max=1000000,
+                default=1000)
+            private$..nChains <- jmvcore::OptionNumber$new(
+                "nChains",
+                nChains,
+                min=1,
+                max=10,
+                default=3)
+            private$..nBurnin <- jmvcore::OptionNumber$new(
+                "nBurnin",
+                nBurnin,
+                min=0,
+                max=1000000,
+                default=0)
+            private$..nThin <- jmvcore::OptionNumber$new(
+                "nThin",
+                nThin,
+                min=1,
+                max=100,
+                default=1)
 
-            self$.addOption(private$..trial)
+            self$.addOption(private$..stim)
             self$.addOption(private$..sig)
             self$.addOption(private$..res)
-            self$.addOption(private$..sub)
+            self$.addOption(private$..subj)
             self$.addOption(private$..group)
+            self$.addOption(private$..nSamples)
+            self$.addOption(private$..nChains)
+            self$.addOption(private$..nBurnin)
+            self$.addOption(private$..nThin)
         }),
     active = list(
-        trial = function() private$..trial$value,
+        stim = function() private$..stim$value,
         sig = function() private$..sig$value,
         res = function() private$..res$value,
-        sub = function() private$..sub$value,
-        group = function() private$..group$value),
+        subj = function() private$..subj$value,
+        group = function() private$..group$value,
+        nSamples = function() private$..nSamples$value,
+        nChains = function() private$..nChains$value,
+        nBurnin = function() private$..nBurnin$value,
+        nThin = function() private$..nThin$value),
     private = list(
-        ..trial = NA,
+        ..stim = NA,
         ..sig = NA,
         ..res = NA,
-        ..sub = NA,
-        ..group = NA)
+        ..subj = NA,
+        ..group = NA,
+        ..nSamples = NA,
+        ..nChains = NA,
+        ..nBurnin = NA,
+        ..nThin = NA)
 )
 
 sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
-        text = function() private$.items[["text"]]),
+        plot = function() private$.items[["plot"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -68,10 +108,11 @@ sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                 options=options,
                 name="",
                 title="Signal Detection Theory")
-            self$add(jmvcore::Preformatted$new(
+            self$add(jmvcore::Image$new(
                 options=options,
-                name="text",
-                title="Signal Detection Theory"))}))
+                name="plot",
+                title="",
+                renderFun=".plot"))}))
 
 sdtBase <- if (requireNamespace('jmvcore')) R6::R6Class(
     "sdtBase",
@@ -96,34 +137,51 @@ sdtBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'
 #' 
 #' @param data .
-#' @param trial .
+#' @param stim .
 #' @param sig .
 #' @param res .
-#' @param sub .
+#' @param subj .
 #' @param group .
+#' @param nSamples a number between 1 and 1000000 (default: 1000) specifying
+#'   the number of  samples that need to be drawn from the posterior
+#'   distribution
+#' @param nChains a number between 1 and 10 (default: 3) specifying the number
+#'   of  MCMC chains that need to be drawn from the posterior distribution
+#' @param nBurnin a number between 1 and 1000000 (default: 1000) specifying
+#'   the number of  burn-in samples that need to be drawn
+#' @param nThin a number between 1 and 100 (default: 1) save the nth number of
+#'   each chain
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$text} \tab \tab \tab \tab \tab a preformatted \cr
+#'   \code{results$plot} \tab \tab \tab \tab \tab a density plot \cr
 #' }
 #'
 #' @export
 sdt <- function(
     data,
-    trial,
+    stim,
     sig,
     res,
-    sub = NULL,
-    group = NULL) {
+    subj = NULL,
+    group = NULL,
+    nSamples = 1000,
+    nChains = 3,
+    nBurnin = 0,
+    nThin = 1) {
 
     if ( ! requireNamespace('jmvcore'))
         stop('sdt requires jmvcore to be installed (restart may be required)')
 
     options <- sdtOptions$new(
-        trial = trial,
+        stim = stim,
         sig = sig,
         res = res,
-        sub = sub,
-        group = group)
+        subj = subj,
+        group = group,
+        nSamples = nSamples,
+        nChains = nChains,
+        nBurnin = nBurnin,
+        nThin = nThin)
 
     results <- sdtResults$new(
         options = options)

@@ -9,20 +9,20 @@ options:
     - name: data
       type: Data
 
-    - name: trial
-      title: Trial
+    - name: stim
+      title: Stimulus
       type: Variable
       
     - name: sig
       title: Signal
       type: Level
-      variable: (trial)
+      variable: (stim)
 
     - name: res
       title: Response
       type: Variable
 
-    - name: sub
+    - name: subj
       title: Subject (optional)
       type: Variable
       default:
@@ -31,4 +31,47 @@ options:
       title: Group (optional)
       type: Variable
       default:
+      
+    - name: nSamples
+      title: Samples
+      type: Number
+      min: 1
+      max: 1000000
+      default: 1000
+      description:
+          R: >
+            a number between 1 and 1000000 (default: 1000) specifying the number of 
+            samples that need to be drawn from the posterior distribution
+            
+    - name: nChains
+      title: Chains
+      type: Number
+      min: 1
+      max: 10
+      default: 3
+      description:
+          R: >
+            a number between 1 and 10 (default: 3) specifying the number of 
+            MCMC chains that need to be drawn from the posterior distribution
+            
+    - name: nBurnin
+      title: Burn-in
+      type: Number
+      min: 0
+      max: 1000000
+      default: 0
+      description:
+          R: >
+            a number between 1 and 1000000 (default: 1000) specifying the number of 
+            burn-in samples that need to be drawn
+            
+    - name: nThin
+      title: Thinning
+      type: Number
+      min: 1
+      max: 100
+      default: 1
+      description:
+          R: >
+            a number between 1 and 100 (default: 1) save the nth number of each chain
 ...
