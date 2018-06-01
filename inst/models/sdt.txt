@@ -16,6 +16,10 @@ model{
             c[i,g] ~ dnorm(cMu[g], cSigma[g])
         }
 
+        # Typical subject of group
+        dTypSubj[g] ~ dnorm(dMu[g], dSigma[g])
+        cTypSubj[g] ~ dnorm(cMu[g], cSigma[g])
+
         # Group priors
         dMu[g] ~ dnorm(0, 0.5)
         dSigma[g] ~ dgamma(2, 2)

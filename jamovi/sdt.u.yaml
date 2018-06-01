@@ -62,3 +62,18 @@ children:
             name: nThin
             format: number
             inputPattern: '[0-9]+'
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: CheckBox
+        name: ci
+        children:
+          - type: TextBox
+            name: ciWidth
+            label: Interval
+            suffix: '%'
+            format: number
+            inputPattern: '[0-9]+'
+            enable: (ci)
+      - type: CheckBox
+        name: summary

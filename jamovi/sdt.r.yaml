@@ -4,10 +4,128 @@ title: Signal Detection Theory
 jrs:   '1.1'
 
 items:
-    - name: plot
-      title: ''
+    - name: sdtGroup
+      title: SDT Group Parameters
+      type: Table
+      visible: (group)
+      rows: (levels(group))
+      clearWith:
+        - stim
+        - sig
+        - res
+        - subj
+        - group
+        - nSamples
+        - nChains
+        - nBurnin
+        - nThin
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          content: ($key)
+        - name: dPrime
+          title: d'
+          type: number
+        - name: dPrimeLower
+          title: 'Lower'
+          type: number
+          visible: (ci)
+        - name: dPrimeUpper
+          title: 'Upper'
+          type: number
+          visible: (ci)
+        - name: c
+          title: 'Criterion'
+          type: number
+        - name: cLower
+          title: 'Lower'
+          type: number
+          visible: (ci)
+        - name: cUpper
+          title: 'Upper'
+          type: number
+          visible: (ci)
+
+    - name: sdtSubj
+      title: SDT Subject Parameters
+      type: Table
+      clearWith:
+        - stim
+        - sig
+        - res
+        - subj
+        - group
+        - nSamples
+        - nChains
+        - nBurnin
+        - nThin
+      rows: (levels(subj))
+      columns:
+        - name: group
+          title: 'Group'
+          type: text
+          visible: (group)
+          combineBelow: true
+        - name: subj
+          title: 'Subject'
+          type: text
+          visible: (subj)
+          content: ($key)
+        - name: dPrime
+          title: d'
+          type: number
+        - name: dPrimeLower
+          title: 'Lower'
+          type: number
+          visible: (ci)
+        - name: dPrimeUpper
+          title: 'Upper'
+          type: number
+          visible: (ci)
+        - name: c
+          title: 'Criterion'
+          type: number
+        - name: cLower
+          title: 'Lower'
+          type: number
+          visible: (ci)
+        - name: cUpper
+          title: 'Upper'
+          type: number
+          visible: (ci)
+        - name: h
+          title: 'Hit'
+          type: integer
+          visible: (summary)
+        - name: m
+          title: 'Miss'
+          type: integer
+          visible: (summary)
+        - name: cr
+          title: 'Correct Rejection'
+          type: integer
+          visible: (summary)
+        - name: fa
+          title: 'False Alarm'
+          type: integer
+          visible: (summary)
+
+    - name: dPrimePlot
+      title: 'dPrime'
       type: Image
-      description: a density plot
-      renderFun: .plot
+      description: plot of the d' parameter
+      renderFun: .dPrimePlot
+      clearWith:
+        - stim
+        - sig
+        - res
+        - subj
+        - group
+        - nSamples
+        - nChains
+        - nBurnin
+        - nThin
+
 
 ...

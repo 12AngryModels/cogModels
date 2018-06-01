@@ -11,8 +11,11 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             res = NULL,
             subj = NULL,
             group = NULL,
+            ci = FALSE,
+            ciWidth = 95,
+            summary = FALSE,
             nSamples = 1000,
-            nChains = 3,
+            nChains = 1,
             nBurnin = 0,
             nThin = 1, ...) {
 
@@ -24,22 +27,60 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
 
             private$..stim <- jmvcore::OptionVariable$new(
                 "stim",
-                stim)
+                stim,
+                suggested=list(
+                    "nominal"),
+                permitted=list(
+                    "nominal",
+                    "nominaltext",
+                    "ordinal"))
             private$..sig <- jmvcore::OptionLevel$new(
                 "sig",
                 sig,
                 variable="(stim)")
             private$..res <- jmvcore::OptionVariable$new(
                 "res",
-                res)
+                res,
+                suggested=list(
+                    "nominal"),
+                permitted=list(
+                    "nominal",
+                    "nominaltext",
+                    "ordinal"))
             private$..subj <- jmvcore::OptionVariable$new(
                 "subj",
                 subj,
-                default=NULL)
+                default=NULL,
+                suggested=list(
+                    "nominal"),
+                permitted=list(
+                    "nominal",
+                    "nominaltext",
+                    "ordinal"))
             private$..group <- jmvcore::OptionVariable$new(
                 "group",
                 group,
-                default=NULL)
+                default=NULL,
+                suggested=list(
+                    "nominal"),
+                permitted=list(
+                    "nominal",
+                    "nominaltext",
+                    "ordinal"))
+            private$..ci <- jmvcore::OptionBool$new(
+                "ci",
+                ci,
+                default=FALSE)
+            private$..ciWidth <- jmvcore::OptionNumber$new(
+                "ciWidth",
+                ciWidth,
+                min=50,
+                max=99.9,
+                default=95)
+            private$..summary <- jmvcore::OptionBool$new(
+                "summary",
+                summary,
+                default=FALSE)
             private$..nSamples <- jmvcore::OptionNumber$new(
                 "nSamples",
                 nSamples,
@@ -51,7 +92,7 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 nChains,
                 min=1,
                 max=10,
-                default=3)
+                default=1)
             private$..nBurnin <- jmvcore::OptionNumber$new(
                 "nBurnin",
                 nBurnin,
@@ -70,6 +111,9 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             self$.addOption(private$..res)
             self$.addOption(private$..subj)
             self$.addOption(private$..group)
+            self$.addOption(private$..ci)
+            self$.addOption(private$..ciWidth)
+            self$.addOption(private$..summary)
             self$.addOption(private$..nSamples)
             self$.addOption(private$..nChains)
             self$.addOption(private$..nBurnin)
@@ -81,6 +125,9 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
         res = function() private$..res$value,
         subj = function() private$..subj$value,
         group = function() private$..group$value,
+        ci = function() private$..ci$value,
+        ciWidth = function() private$..ciWidth$value,
+        summary = function() private$..summary$value,
         nSamples = function() private$..nSamples$value,
         nChains = function() private$..nChains$value,
         nBurnin = function() private$..nBurnin$value,
@@ -91,6 +138,9 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
         ..res = NA,
         ..subj = NA,
         ..group = NA,
+        ..ci = NA,
+        ..ciWidth = NA,
+        ..summary = NA,
         ..nSamples = NA,
         ..nChains = NA,
         ..nBurnin = NA,
@@ -100,7 +150,9 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
 sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
-        plot = function() private$.items[["plot"]]),
+        sdtGroup = function() private$.items[["sdtGroup"]],
+        sdtSubj = function() private$.items[["sdtSubj"]],
+        dPrimePlot = function() private$.items[["dPrimePlot"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -108,11 +160,147 @@ sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                 options=options,
                 name="",
                 title="Signal Detection Theory")
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="sdtGroup",
+                title="SDT Group Parameters",
+                visible="(group)",
+                rows="(levels(group))",
+                clearWith=list(
+                    "stim",
+                    "sig",
+                    "res",
+                    "subj",
+                    "group",
+                    "nSamples",
+                    "nChains",
+                    "nBurnin",
+                    "nThin"),
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `content`="($key)"),
+                    list(
+                        `name`="dPrime", 
+                        `title`="d'", 
+                        `type`="number"),
+                    list(
+                        `name`="dPrimeLower", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="dPrimeUpper", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="c", 
+                        `title`="Criterion", 
+                        `type`="number"),
+                    list(
+                        `name`="cLower", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="cUpper", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `visible`="(ci)"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="sdtSubj",
+                title="SDT Subject Parameters",
+                clearWith=list(
+                    "stim",
+                    "sig",
+                    "res",
+                    "subj",
+                    "group",
+                    "nSamples",
+                    "nChains",
+                    "nBurnin",
+                    "nThin"),
+                rows="(levels(subj))",
+                columns=list(
+                    list(
+                        `name`="group", 
+                        `title`="Group", 
+                        `type`="text", 
+                        `visible`="(group)", 
+                        `combineBelow`=TRUE),
+                    list(
+                        `name`="subj", 
+                        `title`="Subject", 
+                        `type`="text", 
+                        `visible`="(subj)", 
+                        `content`="($key)"),
+                    list(
+                        `name`="dPrime", 
+                        `title`="d'", 
+                        `type`="number"),
+                    list(
+                        `name`="dPrimeLower", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="dPrimeUpper", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="c", 
+                        `title`="Criterion", 
+                        `type`="number"),
+                    list(
+                        `name`="cLower", 
+                        `title`="Lower", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="cUpper", 
+                        `title`="Upper", 
+                        `type`="number", 
+                        `visible`="(ci)"),
+                    list(
+                        `name`="h", 
+                        `title`="Hit", 
+                        `type`="integer", 
+                        `visible`="(summary)"),
+                    list(
+                        `name`="m", 
+                        `title`="Miss", 
+                        `type`="integer", 
+                        `visible`="(summary)"),
+                    list(
+                        `name`="cr", 
+                        `title`="Correct Rejection", 
+                        `type`="integer", 
+                        `visible`="(summary)"),
+                    list(
+                        `name`="fa", 
+                        `title`="False Alarm", 
+                        `type`="integer", 
+                        `visible`="(summary)"))))
             self$add(jmvcore::Image$new(
                 options=options,
-                name="plot",
-                title="",
-                renderFun=".plot"))}))
+                name="dPrimePlot",
+                title="dPrime",
+                renderFun=".dPrimePlot",
+                clearWith=list(
+                    "stim",
+                    "sig",
+                    "res",
+                    "subj",
+                    "group",
+                    "nSamples",
+                    "nChains",
+                    "nBurnin",
+                    "nThin")))}))
 
 sdtBase <- if (requireNamespace('jmvcore')) R6::R6Class(
     "sdtBase",
@@ -142,19 +330,31 @@ sdtBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #' @param res .
 #' @param subj .
 #' @param group .
+#' @param ci \code{TRUE} or \code{FALSE} (default), provide a credible
+#'   interval for the model parameters
+#' @param ciWidth a number between 50 and 99.9 (default: 95) specifying the
+#'   credible interval width that is used as \code{'ci'}
+#' @param summary .
 #' @param nSamples a number between 1 and 1000000 (default: 1000) specifying
-#'   the number of  samples that need to be drawn from the posterior
-#'   distribution
+#'   the number of samples that need to be drawn from the posterior distribution
 #' @param nChains a number between 1 and 10 (default: 3) specifying the number
-#'   of  MCMC chains that need to be drawn from the posterior distribution
+#'   of MCMC chains that need to be drawn from the posterior distribution
 #' @param nBurnin a number between 1 and 1000000 (default: 1000) specifying
-#'   the number of  burn-in samples that need to be drawn
+#'   the number of burn-in samples that need to be drawn
 #' @param nThin a number between 1 and 100 (default: 1) save the nth number of
 #'   each chain
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$plot} \tab \tab \tab \tab \tab a density plot \cr
+#'   \code{results$sdtGroup} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$sdtSubj} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$dPrimePlot} \tab \tab \tab \tab \tab plot of the d' parameter \cr
 #' }
+#'
+#' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
+#'
+#' \code{results$sdtGroup$asDF}
+#'
+#' \code{as.data.frame(results$sdtGroup)}
 #'
 #' @export
 sdt <- function(
@@ -164,8 +364,11 @@ sdt <- function(
     res,
     subj = NULL,
     group = NULL,
+    ci = FALSE,
+    ciWidth = 95,
+    summary = FALSE,
     nSamples = 1000,
-    nChains = 3,
+    nChains = 1,
     nBurnin = 0,
     nThin = 1) {
 
@@ -178,6 +381,9 @@ sdt <- function(
         res = res,
         subj = subj,
         group = group,
+        ci = ci,
+        ciWidth = ciWidth,
+        summary = summary,
         nSamples = nSamples,
         nChains = nChains,
         nBurnin = nBurnin,
