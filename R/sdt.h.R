@@ -31,9 +31,7 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 suggested=list(
                     "nominal"),
                 permitted=list(
-                    "nominal",
-                    "nominaltext",
-                    "ordinal"))
+                    "factor"))
             private$..sig <- jmvcore::OptionLevel$new(
                 "sig",
                 sig,
@@ -44,9 +42,7 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 suggested=list(
                     "nominal"),
                 permitted=list(
-                    "nominal",
-                    "nominaltext",
-                    "ordinal"))
+                    "factor"))
             private$..subj <- jmvcore::OptionVariable$new(
                 "subj",
                 subj,
@@ -54,9 +50,7 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 suggested=list(
                     "nominal"),
                 permitted=list(
-                    "nominal",
-                    "nominaltext",
-                    "ordinal"))
+                    "factor"))
             private$..group <- jmvcore::OptionVariable$new(
                 "group",
                 group,
@@ -64,9 +58,7 @@ sdtOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                 suggested=list(
                     "nominal"),
                 permitted=list(
-                    "nominal",
-                    "nominaltext",
-                    "ordinal"))
+                    "factor"))
             private$..ci <- jmvcore::OptionBool$new(
                 "ci",
                 ci,
@@ -152,7 +144,8 @@ sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
     active = list(
         sdtGroup = function() private$.items[["sdtGroup"]],
         sdtSubj = function() private$.items[["sdtSubj"]],
-        dPrimePlot = function() private$.items[["dPrimePlot"]]),
+        dPrimePlot = function() private$.items[["dPrimePlot"]],
+        cPlot = function() private$.items[["cPlot"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -164,7 +157,6 @@ sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                 options=options,
                 name="sdtGroup",
                 title="SDT Group Parameters",
-                visible="(group)",
                 rows="(levels(group))",
                 clearWith=list(
                     "stim",
@@ -300,6 +292,21 @@ sdtResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                     "nSamples",
                     "nChains",
                     "nBurnin",
+                    "nThin")))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="cPlot",
+                title="Criterion",
+                renderFun=".cPlot",
+                clearWith=list(
+                    "stim",
+                    "sig",
+                    "res",
+                    "subj",
+                    "group",
+                    "nSamples",
+                    "nChains",
+                    "nBurnin",
                     "nThin")))}))
 
 sdtBase <- if (requireNamespace('jmvcore')) R6::R6Class(
@@ -348,6 +355,7 @@ sdtBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'   \code{results$sdtGroup} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$sdtSubj} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$dPrimePlot} \tab \tab \tab \tab \tab plot of the d' parameter \cr
+#'   \code{results$cPlot} \tab \tab \tab \tab \tab plot of the criterion parameter \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

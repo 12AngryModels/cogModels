@@ -3,7 +3,7 @@ name:  resWagner
 title: Rescorla-Wagner Model
 menuGroup: resWagner
 version: '1.0.0'
-jas: '1.1'
+jas: '1.2'
 
 options:
     - name: data

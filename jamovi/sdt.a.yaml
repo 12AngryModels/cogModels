@@ -3,7 +3,7 @@ name:  sdt
 title: Signal Detection Theory
 menuGroup: resWagner
 version: '1.0.0'
-jas: '1.1'
+jas: '1.2'
 
 options:
     - name: data
@@ -15,9 +15,7 @@ options:
       suggested:
         - nominal
       permitted:
-        - nominal
-        - nominaltext
-        - ordinal
+        - factor
 
     - name: sig
       title: Signal
@@ -30,9 +28,7 @@ options:
       suggested:
         - nominal
       permitted:
-        - nominal
-        - nominaltext
-        - ordinal
+        - factor
 
     - name: subj
       title: Subject (optional)
@@ -41,9 +37,7 @@ options:
       suggested:
         - nominal
       permitted:
-        - nominal
-        - nominaltext
-        - ordinal
+        - factor
 
     - name: group
       title: Group (optional)
@@ -52,9 +46,7 @@ options:
       suggested:
         - nominal
       permitted:
-        - nominal
-        - nominaltext
-        - ordinal
+        - factor
 
     - name: ci
       title: Credible interval

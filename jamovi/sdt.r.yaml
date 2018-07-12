@@ -7,7 +7,6 @@ items:
     - name: sdtGroup
       title: SDT Group Parameters
       type: Table
-      visible: (group)
       rows: (levels(group))
       clearWith:
         - stim
@@ -116,6 +115,22 @@ items:
       type: Image
       description: plot of the d' parameter
       renderFun: .dPrimePlot
+      clearWith:
+        - stim
+        - sig
+        - res
+        - subj
+        - group
+        - nSamples
+        - nChains
+        - nBurnin
+        - nThin
+
+    - name: cPlot
+      title: 'Criterion'
+      type: Image
+      description: plot of the criterion parameter
+      renderFun: .cPlot
       clearWith:
         - stim
         - sig

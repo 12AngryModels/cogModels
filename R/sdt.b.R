@@ -24,6 +24,7 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             private$.populateSdtSubjTable(sumStats$subjs)
 
             private$.preparedPrimePlot(sumStats)
+            private$.preparecPlot(sumStats)
         },
 
         #### Compute results ----
@@ -65,6 +66,9 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             table$getColumn('cLower')$setSuperTitle(jmvcore::format('{}% Credible Interval', ciWidth))
             table$getColumn('cUpper')$setSuperTitle(jmvcore::format('{}% Credible Interval', ciWidth))
 
+            if (is.null(self$options$group))
+                table$addRow(rowKey=1)
+
         },
         .initSdtSubjTable = function() {
 
@@ -77,8 +81,15 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             table$getColumn('cLower')$setSuperTitle(jmvcore::format('{}% Credible Interval', ciWidth))
             table$getColumn('cUpper')$setSuperTitle(jmvcore::format('{}% Credible Interval', ciWidth))
 
-            if (is.null(self$options$subj))
-                table$addRow(rowKey=1)
+            if (is.null(self$options$subj)) {
+                if (is.null(self$options$group)) {
+                    table$addRow(rowKey=1)
+                } else {
+                    levels <- levels(self$data[[self$options$group]])
+                    for (l in seq_along(levels))
+                        table$addRow(rowKey=l)
+                }
+            }
         },
 
         #### Populate tables ----
@@ -167,12 +178,15 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                     # ggplot2::geom_rect(data = group[[i]], ggplot2::aes(x = NULL, y = NULL, xmin=-Inf, xmax=Inf, ymin=dPrimeLower, ymax=dPrimeUpper, color=NULL), alpha = 0.1) +
                     ggplot2::scale_color_brewer(type="qual", palette = 'Dark2') +
                     ggplot2::scale_fill_brewer(type="qual", palette = 'Dark2') +
-                    ggplot2::ggtitle(group[[i]]$group) + ggplot2::theme_bw(base_size = 16) +
+                    ggplot2::ggtitle(group[[i]]$group) + ggtheme +
+                    # ggplot2::theme_bw(base_size = 16) +
                     ggplot2::theme(panel.spacing = grid::unit(2, "lines"), legend.position = "none",
                                    axis.title.y=ggplot2::element_blank(),
                                    axis.title.x=ggplot2::element_blank(),
                                    plot.title = ggplot2::element_text(hjust = 0.5),
-                                   panel.border = ggplot2::element_rect(colour = '#333333', fill=NA)) +
+                                   panel.border = ggplot2::element_rect(colour = '#333333', fill=NA),
+                                   panel.grid = ggplot2::element_line(colour = "grey92"),
+                                   panel.grid.minor = ggplot2::element_line(size = ggplot2::rel(0.5))) +
                     base_breaks_x(breaks = subjs[[i]]$x, labels = subjs[[i]]$subj) +
                     base_breaks_y(group[[i]]$xMin, group[[i]]$xMax, group[[i]]$dPrime)
 
@@ -189,7 +203,95 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             #     ggplot2::geom_line(color=theme$color[1]) + ggplot2::xlab('dPrime') + ggplot2::ylab('Density') +
             #     ggtheme
 
+            TRUE
 
+        },
+        .preparecPlot = function(results) {
+
+            subjs <- split(results$subjs, f = results$subjs$group)
+            group <- split(results$group, f = results$group$group)
+            typSubj <- split(results$typSubj, f = results$group$group)
+
+            l <- max(sapply(subjs, nrow)):1
+            for (i in seq_along(subjs)) {
+
+                typSubj[[i]]$subj <- 'S'
+                typSubj[[i]]$x <- l[1] + 1.25
+                typSubj[[i]]$subGroup <- 'A'
+
+                subjs[[i]]$x <- l[1:nrow(subjs[[i]])]
+                subjs[[i]]$subGroup <- rep('B', nrow(subjs[[i]]))
+
+                subjs[[i]] <- rbind(typSubj[[i]], subjs[[i]][, names(typSubj[[i]])])
+            }
+
+
+            xMin <- min(results$subjs$cLower, results$typSubj$cLower, results$group$cLower)
+            xMax <- max(results$subjs$cUpper, results$typSubj$cUpper, results$group$cUpper)
+
+            group <- lapply(group,
+                            function(x) {
+                                x$xMin = xMin
+                                x$xMax = xMax
+                                return(x)
+                            })
+
+            image <- self$results$cPlot
+            image$setState(list(subjs=subjs, group=group))
+
+        },
+        .cPlot = function(image, ggtheme, theme, ...) {
+
+            if (is.null(image$state))
+                return(FALSE)
+
+            subjs <- image$state$subjs
+            group <- image$state$group
+
+            base_breaks_x <- function(breaks, labels) {
+                limits <- c(1, max(breaks))
+                ggplot2::scale_x_continuous(limits = limits, breaks = breaks, labels = labels)
+            }
+
+            base_breaks_y <- function(xMin, xMax, median) {
+                values <- pretty(c(xMin, xMax))
+                limits <- c(min(values), max(values))
+                ggplot2::scale_y_continuous(limits = limits)
+            }
+
+            plots <- list()
+            for (i in seq_along(subjs)) {
+
+                plots[[i]] <- ggplot2::ggplot(subjs[[i]], ggplot2::aes(x=x, y=c, ymin=cLower, ymax=cUpper, color=subGroup)) +
+                    ggplot2::geom_pointrange(size = 0.5) + ggplot2::coord_flip() +
+                    ggplot2::geom_hline(data = group[[i]], ggplot2::aes(yintercept = 0), linetype = "dotted") +
+                    # ggplot2::geom_rect(data = group[[i]], ggplot2::aes(x = NULL, y = NULL, xmin=-Inf, xmax=Inf, ymin=dPrimeLower, ymax=dPrimeUpper, color=NULL), alpha = 0.1) +
+                    ggplot2::scale_color_brewer(type="qual", palette = 'Dark2') +
+                    ggplot2::scale_fill_brewer(type="qual", palette = 'Dark2') +
+                    ggplot2::ggtitle(group[[i]]$group) + ggtheme +
+                    # ggplot2::theme_bw(base_size = 16) +
+                    ggplot2::theme(panel.spacing = grid::unit(2, "lines"), legend.position = "none",
+                                   axis.title.y=ggplot2::element_blank(),
+                                   axis.title.x=ggplot2::element_blank(),
+                                   plot.title = ggplot2::element_text(hjust = 0.5),
+                                   panel.border = ggplot2::element_rect(colour = '#333333', fill=NA),
+                                   panel.grid = ggplot2::element_line(colour = "grey92"),
+                                   panel.grid.minor = ggplot2::element_line(size = ggplot2::rel(0.5))) +
+                    base_breaks_x(breaks = subjs[[i]]$x, labels = subjs[[i]]$subj) +
+                    base_breaks_y(group[[i]]$xMin, group[[i]]$xMax, group[[i]]$dPrime)
+
+            }
+
+            do.call(gridExtra::grid.arrange, c(plots, ncol=length(subjs)))
+
+            # p <- gridExtra::marrangeGrob(plots, ncol=length(subjs), nrow=1)
+
+            # print(p)
+
+            # p <- ggplot2::ggplot(image$state, ggplot2::aes(x=x, y=y)) +
+            #     ggplot2::geom_ribbon(ggplot2::aes(ymax=y), ymin=0, fill=theme$fill[2]) +
+            #     ggplot2::geom_line(color=theme$color[1]) + ggplot2::xlab('dPrime') + ggplot2::ylab('Density') +
+            #     ggtheme
 
             TRUE
 
@@ -222,6 +324,10 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                                                 df[[groups]],
                                                 function(x) return(length(unique(x)))))
                 }
+            } else if ( ! is.null(groups)) {
+
+                nSubjs <- rep(1, nGroups)
+
             }
 
             # Split data into one data set per subject
@@ -232,6 +338,8 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                 } else {
                     dfs <- split(df, f = list(df[[subjects]]))
                 }
+            } else if ( ! is.null(groups)) {
+                dfs <- split(df, f = list(df[[groups]]))
             }
 
             # Calculate summary stats
@@ -249,8 +357,13 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
                             stimData <- dfs[[iter]][[stimulus]]
                         }
                     } else {
-                        respData <- dfs[[response]]
-                        stimData <- dfs[[stimulus]]
+                        if ( ! is.null(groups)) {
+                            respData <- dfs[[iter]][[response]]
+                            stimData <- dfs[[iter]][[stimulus]]
+                        } else {
+                            respData <- dfs[[response]]
+                            stimData <- dfs[[stimulus]]
+                        }
                     }
 
                     sigTrials <- which(stimData == signal)
@@ -283,6 +396,8 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             subjects <- 1
             if ( ! is.null(self$options$subj))
                 subjects <- levels(self$data[[self$options$subj]])
+            else if ( ! is.null(self$options$group))
+                subjects <- 1:length(self$data[[self$options$group]])
 
             groups <- 1
             if ( ! is.null(self$options$group))
@@ -344,10 +459,10 @@ sdtClass <- if (requireNamespace('jmvcore')) R6::R6Class(
             }
 
             dfGroup <- data.frame(group=as.character(groups), dPrime=dPrimeG, dPrimeLower=dPrimeGLower,
-                                  dPrimeUpper=dPrimeGUpper, c=cG, cLower=cGLower, cUpper=cGUpper)
+                                  dPrimeUpper=dPrimeGUpper, c=cG, cLower=cGLower, cUpper=cGUpper, stringsAsFactors = FALSE)
 
             dfTypSubj <- data.frame(group=as.character(groups), dPrime=dPrimeTyp, dPrimeLower=dPrimeTypLower,
-                                    dPrimeUpper=dPrimeTypUpper, c=cTyp, cLower=cTypLower, cUpper=cTypUpper)
+                                    dPrimeUpper=dPrimeTypUpper, c=cTyp, cLower=cTypLower, cUpper=cTypUpper, stringsAsFactors = FALSE)
 
             dfSubjs <- data.frame(group=group, subj=subj, dPrime=dPrime, dPrimeLower=dPrimeLower,
                                   dPrimeUpper=dPrimeUpper, c=c, cLower=cLower, cUpper=cUpper,
